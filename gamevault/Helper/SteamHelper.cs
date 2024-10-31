@@ -10,6 +10,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Microsoft.IdentityModel.Tokens;
 using ValveKeyValue;
+using Gamevault.Models;
 
 namespace gamevault.Helper
 {
@@ -20,8 +21,6 @@ namespace gamevault.Helper
             RegistryKey key = Registry.LocalMachine.OpenSubKey("Software\\Valve\\Steam");
             if (key == null)
                 key = Registry.LocalMachine.OpenSubKey("Software\\Wow6432Node\\Valve\\Steam");
-            if (key == null)
-                return null;
 
             string? path = key.GetValue("InstallPath").ToString();
 
@@ -48,7 +47,6 @@ namespace gamevault.Helper
             string shortcutFile = $"{steamInstallPath}\\userdata\\{userID}\\config\\shortcuts.vdf";
             if (!File.Exists(shortcutFile))
             {
-                Debug.WriteLine("no exist");
                 return null;
             }
 
@@ -64,7 +62,6 @@ namespace gamevault.Helper
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e);
                 return null;
             }
         }
@@ -155,6 +152,27 @@ namespace gamevault.Helper
             List<KVObject> shortcutList = shortcuts.ToList();
             int length = shortcutList.ToArray().Length;
 
+            SteamShortcut shortcutObj = new SteamShortcut
+            {
+                appID = appID.ToString(),
+                appName = game.Title,
+                exe = executablePath,
+                startDir = executableDir,
+                launchOptions = launchOptions,
+                allowDesktopConfig = 1,
+                allowOverlay = 1,
+                icon = "",
+                index = length,
+                isHidden = 0,
+                openVR = 0,
+                shortcutPath = "",
+                tags = 0,
+                devkit = 0,
+                devkitGameID = "",
+                lastPlayTime = lastPlayed
+            };
+
+
 
             KVObject[] array = {
                 new KVObject("appid", appID),
@@ -175,9 +193,19 @@ namespace gamevault.Helper
                 new KVObject("LastPlayTime", lastPlayed),
             };
 
+
             KVObject newShortcut = new KVObject(length.ToString(), array);
-            KVObject newShortcuts = new KVObject("shortcuts", shortcutList.Append(newShortcut));
-            WriteShortcuts(newShortcuts, steamInstallPath, userID);
+            var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary);
+
+            Stream test1file = File.OpenWrite("test.vdf");
+            kv.Serialize(test1file, newShortcut, "shortcuts");
+            test1file.Close();
+            Stream test2file = File.OpenWrite("test2.vdf");
+            kv.Serialize(test2file, shortcutObj, "shortcuts");
+            test2file.Close();
+
+            //KVObject newShortcuts = new KVObject("shortcuts", shortcutList.Append(newShortcut));
+            //WriteShortcuts(newShortcuts, steamInstallPath, userID);
 
 
             // TODO make a shortcut class, for easier creation/(de)serialization

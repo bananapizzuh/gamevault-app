@@ -450,6 +450,11 @@ namespace gamevault.UserControls
             await DesktopHelper.CreateShortcut(ViewModel.Game, SavedExecutable, true);
         }
 
+        private void AddGameToSteam(object sender, RoutedEventArgs e)
+        {
+            SteamHelper.AddGameToSteam(ViewModel.Game, "0");
+        }
+
         private void LaunchParameter_Changed(object sender, RoutedEventArgs e)
         {
             if (Directory.Exists(ViewModel.Directory))
